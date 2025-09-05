@@ -1,0 +1,728 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hello World - Interactive</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: #000;
+            color: #fff;
+            overflow-x: hidden;
+            cursor: none;
+        }
+
+        .custom-cursor {
+            position: fixed;
+            width: 20px;
+            height: 20px;
+            border: 2px solid #fff;
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 9999;
+            transition: all 0.1s ease;
+            mix-blend-mode: difference;
+        }
+
+        .custom-cursor.clicked {
+            transform: scale(0.5);
+            background: #fff;
+        }
+
+        .container {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+        }
+
+        .particle-canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .interactive-grid {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .grid-dot {
+            position: absolute;
+            width: 4px;
+            height: 4px;
+            background: rgba(255,255,255,0.3);
+            border-radius: 50%;
+            transition: all 0.3s ease;
+        }
+
+        .grid-dot.active {
+            background: #fff;
+            transform: scale(3);
+            box-shadow: 0 0 20px #fff;
+        }
+
+        .hero {
+            text-align: center;
+            z-index: 2;
+            animation: fadeInUp 1.5s ease-out;
+            user-select: none;
+        }
+
+        @keyframes fadeInUp {
+            0% {
+                opacity: 0;
+                transform: translateY(50px);
+            }
+            100% {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .main-title {
+            font-size: clamp(4rem, 12vw, 12rem);
+            font-weight: 900;
+            letter-spacing: -0.05em;
+            line-height: 0.9;
+            margin-bottom: 2rem;
+            background: linear-gradient(135deg, #fff 0%, #888 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .main-title:hover {
+            transform: scale(1.05);
+            filter: drop-shadow(0 0 40px rgba(255,255,255,0.8));
+        }
+
+        .title-char {
+            display: inline-block;
+            transition: all 0.3s ease;
+        }
+
+        .title-char:hover {
+            transform: translateY(-10px) rotate(5deg);
+            color: #fff;
+            text-shadow: 0 0 20px #fff;
+        }
+
+        .subtitle {
+            font-size: clamp(1.2rem, 4vw, 2rem);
+            font-weight: 300;
+            margin-bottom: 3rem;
+            opacity: 0.8;
+            animation: fadeIn 2s ease-out 0.5s both;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .subtitle:hover {
+            opacity: 1;
+            transform: scale(1.05);
+            text-shadow: 0 0 10px #fff;
+        }
+
+        @keyframes fadeIn {
+            0% { opacity: 0; }
+            100% { opacity: 0.8; }
+        }
+
+        .cta-button {
+            display: inline-block;
+            padding: 1.2rem 3rem;
+            background: transparent;
+            color: #fff;
+            text-decoration: none;
+            border: 2px solid #fff;
+            font-size: 1.1rem;
+            font-weight: 600;
+            letter-spacing: 0.05em;
+            transition: all 0.4s ease;
+            position: relative;
+            overflow: hidden;
+            animation: fadeIn 2.5s ease-out 1s both;
+            cursor: pointer;
+        }
+
+        .cta-button::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: #fff;
+            transition: left 0.4s ease;
+            z-index: -1;
+        }
+
+        .cta-button:hover {
+            color: #000;
+            transform: translateY(-5px) scale(1.05);
+            box-shadow: 0 15px 40px rgba(255,255,255,0.3);
+        }
+
+        .cta-button:hover::before {
+            left: 0;
+        }
+
+        .cta-button:active {
+            transform: translateY(-3px) scale(0.98);
+        }
+
+        .nav {
+            position: absolute;
+            top: 2rem;
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 3rem;
+            z-index: 3;
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .logo:hover {
+            transform: rotate(360deg) scale(1.2);
+            text-shadow: 0 0 20px #fff;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 2rem;
+        }
+
+        .nav-links a {
+            color: #fff;
+            text-decoration: none;
+            font-weight: 500;
+            opacity: 0.8;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            position: relative;
+        }
+
+        .nav-links a::after {
+            content: '';
+            position: absolute;
+            bottom: -5px;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background: #fff;
+            transition: width 0.3s ease;
+        }
+
+        .nav-links a:hover {
+            opacity: 1;
+            transform: translateY(-3px);
+            text-shadow: 0 0 10px #fff;
+        }
+
+        .nav-links a:hover::after {
+            width: 100%;
+        }
+
+        .interactive-elements {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+
+        .ripple {
+            position: absolute;
+            border: 2px solid rgba(255,255,255,0.5);
+            border-radius: 50%;
+            transform: scale(0);
+            animation: ripple-animation 1s linear;
+            pointer-events: none;
+        }
+
+        @keyframes ripple-animation {
+            to {
+                transform: scale(4);
+                opacity: 0;
+            }
+        }
+
+        .floating-text {
+            position: absolute;
+            color: #fff;
+            font-size: 14px;
+            pointer-events: none;
+            animation: floatUp 2s ease-out forwards;
+            z-index: 10;
+        }
+
+        @keyframes floatUp {
+            0% {
+                opacity: 1;
+                transform: translateY(0);
+            }
+            100% {
+                opacity: 0;
+                transform: translateY(-100px);
+            }
+        }
+
+        .sound-toggle {
+            position: absolute;
+            top: 2rem;
+            right: 3rem;
+            background: transparent;
+            border: 2px solid #fff;
+            color: #fff;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 1.2rem;
+            z-index: 4;
+        }
+
+        .sound-toggle:hover {
+            background: #fff;
+            color: #000;
+            transform: scale(1.1);
+        }
+
+        .code-rain {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 0;
+            opacity: 0.1;
+        }
+
+        .code-char {
+            position: absolute;
+            color: #fff;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            animation: fall linear infinite;
+        }
+
+        @keyframes fall {
+            0% {
+                transform: translateY(-100vh);
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(100vh);
+                opacity: 0;
+            }
+        }
+
+        .glitch-effect {
+            animation: glitch 0.3s ease-in-out;
+        }
+
+        @keyframes glitch {
+            0% { transform: translate(0); }
+            20% { transform: translate(-2px, 2px); }
+            40% { transform: translate(-2px, -2px); }
+            60% { transform: translate(2px, 2px); }
+            80% { transform: translate(2px, -2px); }
+            100% { transform: translate(0); }
+        }
+
+        @media (max-width: 768px) {
+            .nav {
+                padding: 0 1.5rem;
+            }
+            
+            .nav-links {
+                gap: 1rem;
+            }
+            
+            .subtitle {
+                padding: 0 1rem;
+            }
+            
+            .cta-button {
+                padding: 1rem 2rem;
+                font-size: 1rem;
+            }
+
+            .sound-toggle {
+                right: 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="custom-cursor"></div>
+    
+    <div class="container">
+        <canvas class="particle-canvas" id="particleCanvas"></canvas>
+        <div class="interactive-grid" id="interactiveGrid"></div>
+        <div class="code-rain" id="codeRain"></div>
+        <div class="interactive-elements" id="interactiveElements"></div>
+        
+        <nav class="nav">
+            <div class="logo" id="logo">HW</div>
+            <div class="nav-links">
+                <a href="#about" data-text="About">About</a>
+                <a href="#work" data-text="Work">Work</a>
+                <a href="#contact" data-text="Contact">Contact</a>
+            </div>
+        </nav>
+
+        <button class="sound-toggle" id="soundToggle">🔊</button>
+
+        <main class="hero">
+            <h1 class="main-title" id="mainTitle">Hello<br>World</h1>
+            <p class="subtitle" id="subtitle">Where code meets creativity</p>
+            <a href="#explore" class="cta-button" id="ctaButton">EXPLORE</a>
+        </main>
+    </div>
+
+    <script>
+        // Audio Context for sound effects
+        let audioContext;
+        let soundEnabled = true;
+
+        // Initialize audio
+        function initAudio() {
+            audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        }
+
+        // Play sound effect
+        function playSound(frequency, duration = 0.1, type = 'sine') {
+            if (!soundEnabled || !audioContext) return;
+            
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+            
+            oscillator.frequency.value = frequency;
+            oscillator.type = type;
+            
+            gainNode.gain.setValueAtTime(0.1, audioContext.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + duration);
+            
+            oscillator.start(audioContext.currentTime);
+            oscillator.stop(audioContext.currentTime + duration);
+        }
+
+        // Custom cursor
+        const cursor = document.querySelector('.custom-cursor');
+        let mouseX = 0, mouseY = 0;
+
+        document.addEventListener('mousemove', (e) => {
+            mouseX = e.clientX;
+            mouseY = e.clientY;
+            cursor.style.left = mouseX - 10 + 'px';
+            cursor.style.top = mouseY - 10 + 'px';
+        });
+
+        document.addEventListener('mousedown', () => {
+            cursor.classList.add('clicked');
+            playSound(800, 0.1);
+        });
+
+        document.addEventListener('mouseup', () => {
+            cursor.classList.remove('clicked');
+        });
+
+        // Particle system
+        const canvas = document.getElementById('particleCanvas');
+        const ctx = canvas.getContext('2d');
+        
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        const particles = [];
+        const maxParticles = 100;
+
+        class Particle {
+            constructor(x, y) {
+                this.x = x || Math.random() * canvas.width;
+                this.y = y || Math.random() * canvas.height;
+                this.vx = (Math.random() - 0.5) * 2;
+                this.vy = (Math.random() - 0.5) * 2;
+                this.size = Math.random() * 3 + 1;
+                this.life = 1;
+                this.decay = Math.random() * 0.02 + 0.01;
+            }
+
+            update() {
+                this.x += this.vx;
+                this.y += this.vy;
+                this.life -= this.decay;
+
+                if (this.x < 0 || this.x > canvas.width) this.vx *= -1;
+                if (this.y < 0 || this.y > canvas.height) this.vy *= -1;
+            }
+
+            draw() {
+                ctx.save();
+                ctx.globalAlpha = this.life;
+                ctx.fillStyle = '#fff';
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.restore();
+            }
+        }
+
+        function createParticle(x, y) {
+            if (particles.length < maxParticles) {
+                particles.push(new Particle(x, y));
+            }
+        }
+
+        function animateParticles() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            for (let i = particles.length - 1; i >= 0; i--) {
+                particles[i].update();
+                particles[i].draw();
+                
+                if (particles[i].life <= 0) {
+                    particles.splice(i, 1);
+                }
+            }
+            
+            requestAnimationFrame(animateParticles);
+        }
+
+        // Interactive grid
+        function createInteractiveGrid() {
+            const grid = document.getElementById('interactiveGrid');
+            const spacing = 80;
+            const cols = Math.ceil(window.innerWidth / spacing);
+            const rows = Math.ceil(window.innerHeight / spacing);
+
+            for (let i = 0; i < rows; i++) {
+                for (let j = 0; j < cols; j++) {
+                    const dot = document.createElement('div');
+                    dot.className = 'grid-dot';
+                    dot.style.left = j * spacing + 'px';
+                    dot.style.top = i * spacing + 'px';
+                    grid.appendChild(dot);
+
+                    dot.addEventListener('mouseenter', () => {
+                        dot.classList.add('active');
+                        playSound(400 + j * 50, 0.1);
+                        setTimeout(() => dot.classList.remove('active'), 500);
+                    });
+                }
+            }
+        }
+
+        // Code rain effect
+        function createCodeRain() {
+            const codeRain = document.getElementById('codeRain');
+            const characters = '01{}[];().<>/\\|=+-*&^%$#@!?';
+            
+            for (let i = 0; i < 50; i++) {
+                const char = document.createElement('div');
+                char.className = 'code-char';
+                char.textContent = characters[Math.floor(Math.random() * characters.length)];
+                char.style.left = Math.random() * window.innerWidth + 'px';
+                char.style.animationDuration = (Math.random() * 3 + 2) + 's';
+                char.style.animationDelay = Math.random() * 5 + 's';
+                codeRain.appendChild(char);
+            }
+        }
+
+        // Interactive title
+        function makeInteractiveTitle() {
+            const title = document.getElementById('mainTitle');
+            const text = title.textContent;
+            title.innerHTML = '';
+            
+            for (let char of text) {
+                if (char === '\n') {
+                    title.appendChild(document.createElement('br'));
+                } else if (char !== ' ') {
+                    const span = document.createElement('span');
+                    span.className = 'title-char';
+                    span.textContent = char;
+                    span.addEventListener('mouseenter', () => {
+                        playSound(600 + Math.random() * 400, 0.15);
+                        createParticle(mouseX, mouseY);
+                    });
+                    title.appendChild(span);
+                } else {
+                    title.appendChild(document.createTextNode(' '));
+                }
+            }
+        }
+
+        // Ripple effect
+        function createRipple(x, y) {
+            const ripple = document.createElement('div');
+            ripple.className = 'ripple';
+            ripple.style.left = x - 25 + 'px';
+            ripple.style.top = y - 25 + 'px';
+            ripple.style.width = ripple.style.height = '50px';
+            
+            document.body.appendChild(ripple);
+            
+            setTimeout(() => {
+                document.body.removeChild(ripple);
+            }, 1000);
+        }
+
+        // Floating text effect
+        function createFloatingText(text, x, y) {
+            const floatingText = document.createElement('div');
+            floatingText.className = 'floating-text';
+            floatingText.textContent = text;
+            floatingText.style.left = x + 'px';
+            floatingText.style.top = y + 'px';
+            
+            document.body.appendChild(floatingText);
+            
+            setTimeout(() => {
+                if (document.body.contains(floatingText)) {
+                    document.body.removeChild(floatingText);
+                }
+            }, 2000);
+        }
+
+        // Glitch effect
+        function triggerGlitch(element) {
+            element.classList.add('glitch-effect');
+            setTimeout(() => {
+                element.classList.remove('glitch-effect');
+            }, 300);
+        }
+
+        // Event listeners
+        document.addEventListener('click', (e) => {
+            createRipple(e.clientX, e.clientY);
+            createParticle(e.clientX, e.clientY);
+            playSound(200, 0.2);
+            
+            const messages = ['Hello!', 'World!', 'Code!', 'Magic!', 'Click!'];
+            createFloatingText(
+                messages[Math.floor(Math.random() * messages.length)],
+                e.clientX - 20,
+                e.clientY - 30
+            );
+        });
+
+        document.getElementById('logo').addEventListener('click', () => {
+            triggerGlitch(document.getElementById('mainTitle'));
+            playSound(1000, 0.3);
+        });
+
+        document.getElementById('subtitle').addEventListener('click', () => {
+            const subtitle = document.getElementById('subtitle');
+            const texts = [
+                'Where code meets creativity',
+                'Interactive experiences await',
+                'Click anywhere to explore',
+                'Sound on for full experience'
+            ];
+            subtitle.textContent = texts[Math.floor(Math.random() * texts.length)];
+            playSound(300, 0.5);
+        });
+
+        document.getElementById('ctaButton').addEventListener('click', (e) => {
+            e.preventDefault();
+            triggerGlitch(document.querySelector('.hero'));
+            for (let i = 0; i < 10; i++) {
+                setTimeout(() => {
+                    createParticle(
+                        mouseX + (Math.random() - 0.5) * 100,
+                        mouseY + (Math.random() - 0.5) * 100
+                    );
+                }, i * 50);
+            }
+            playSound(500, 0.8);
+        });
+
+        // Sound toggle
+        document.getElementById('soundToggle').addEventListener('click', () => {
+            soundEnabled = !soundEnabled;
+            const button = document.getElementById('soundToggle');
+            button.textContent = soundEnabled ? '🔊' : '🔇';
+            
+            if (soundEnabled && !audioContext) {
+                initAudio();
+            }
+        });
+
+        // Keyboard interactions
+        document.addEventListener('keydown', (e) => {
+            const key = e.key.toLowerCase();
+            if (key === ' ') {
+                e.preventDefault();
+                createParticle(mouseX, mouseY);
+                playSound(440, 0.2);
+            } else if (key === 'enter') {
+                triggerGlitch(document.body);
+                playSound(880, 0.3);
+            }
+        });
+
+        // Initialize everything
+        document.addEventListener('DOMContentLoaded', () => {
+            createInteractiveGrid();
+            createCodeRain();
+            makeInteractiveTitle();
+            animateParticles();
+            
+            // Auto-create particles occasionally
+            setInterval(() => {
+                if (Math.random() < 0.3) {
+                    createParticle();
+                }
+            }, 500);
+        });
+
+        // Handle window resize
+        window.addEventListener('resize', () => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        });
+
+        // Initialize audio on first user interaction
+        document.addEventListener('click', () => {
+            if (!audioContext) {
+                initAudio();
+            }
+        }, { once: true });
+    </script>
+</body>
+</html>
